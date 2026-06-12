@@ -6,7 +6,7 @@ import re
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-TOKEN = os.environ.get("8908217414:AAE5kpUsI6CZgSfybD1VJnrxGHZeYQgpuo8")
+TOKEN = 8908217414:AAE5kpUsI6CZgSfybD1VJnrxGHZeYQgpuo8
 
 active_attacks = {}
 
